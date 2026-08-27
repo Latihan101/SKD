@@ -28,9 +28,11 @@
 ============================================================ */
 
 const daftarPengguna = [
-  { id: 'p01', username: 'peserta1', password: '12345' },
-  { id: 'p02', username: 'peserta2', password: '12345' },
-  { id: 'p03', username: 'peserta3', password: '12345' },
+  { id: 'p01', username: 'admin01', password: '12345' },
+  { id: 'p02', username: 'admin02', password: '12345' },
+  { id: 'p03', username: 'peserta01', password: '12345' },
+  { id: 'p04', username: 'peserta02', password: '12345' },
+  { id: 'p05', username: 'peserta03', password: '12345' },
   // Tambahkan akun baru di bawah ini, contoh:
   // { id: 'p04', username: 'budisantoso', password: 'ganti123' },
 ];

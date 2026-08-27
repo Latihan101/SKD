@@ -2101,6 +2101,14 @@ function clearLoggedInUser(){localStorage.removeItem(SESSION_KEY);}
 function getLoggedInId(){return localStorage.getItem(SESSION_ID_KEY)||null;}
 function setLoggedInId(id){localStorage.setItem(SESSION_ID_KEY,id);}
 function clearLoggedInId(){localStorage.removeItem(SESSION_ID_KEY);}
+// Sumber akun saat ini: 'sheet' = sudah pernah override (username/password sudah
+// diganti, tersimpan di Sheet), 'default' = masih pakai kredensial default dari
+// daftar-pengguna.js. Dipakai supaya verifikasi "password sekarang" saat ganti
+// akun tidak salah membandingkan ke password default yang sudah tidak berlaku.
+const SESSION_SRC_KEY='skd_logged_in_src';
+function getLoggedInSrc(){return localStorage.getItem(SESSION_SRC_KEY)||null;}
+function setLoggedInSrc(s){localStorage.setItem(SESSION_SRC_KEY,s);}
+function clearLoggedInSrc(){localStorage.removeItem(SESSION_SRC_KEY);}
 function saveActivePage(p){if(!NON_RESTORABLE.includes(p))localStorage.setItem(ACTIVE_PAGE_KEY,p);}
 function getLastActivePage(){return localStorage.getItem(ACTIVE_PAGE_KEY)||'homePage';}
 
@@ -2134,9 +2142,11 @@ async function doLogin(){
     const data = await res.json();
 
     if(data.ok){
-      // Ketemu & cocok di Sheet -> login pakai data dari Sheet
+      // Ketemu & cocok di Sheet -> login pakai data dari Sheet (akun ini sudah
+      // pernah override, jadi verifikasi password berikutnya harus lewat backend)
       setLoggedInUser(username);
       setLoggedInId(data.id);
+      setLoggedInSrc('sheet');
       return finishLoginSuccess_();
     }
 
@@ -2164,6 +2174,7 @@ async function doLogin(){
     if(akunDefault){
       setLoggedInUser(akunDefault.username);
       setLoggedInId(akunDefault.id);
+      setLoggedInSrc('default');
       return finishLoginSuccess_();
     }
 
@@ -2194,9 +2205,16 @@ function finishLoginSuccess_(){
 // Verifikasi password saat ini terhadap akun aktif (default di daftar-pengguna.js
 // atau override di Sheet -- untuk kasus override, verifikasi dilakukan backend).
 // Dipakai bareng oleh Ganti Username & Ganti Password.
+//
+// PENTING: id tidak pernah dihapus dari daftar-pengguna.js (memang harus tetap
+// ada selamanya), jadi id SELALU ketemu di DAFTAR_PENGGUNA walau akunnya sudah
+// pernah di-override. Karena itu kita tidak bisa memakai "ketemu/tidak ketemu di
+// DAFTAR_PENGGUNA" untuk menentukan apakah akun sudah override -- harus pakai
+// status sumber login (getLoggedInSrc()) yang di-set saat login / setelah ganti akun.
 function passwordCocokDenganDefault_(id, passwordDicoba){
+  if(getLoggedInSrc() === 'sheet') return null; // akun sudah override -> biar backend yang verifikasi
   const akunDefault = DAFTAR_PENGGUNA.find(u => u.id === id);
-  if(!akunDefault) return null; // null = tidak diketahui di sini, biar backend yang verifikasi (akun sudah override)
+  if(!akunDefault) return null; // tidak diketahui di sini, biar backend yang verifikasi
   return passwordDicoba === akunDefault.password;
 }
 
@@ -2221,7 +2239,13 @@ async function kirimGantiAkun_(usernameBaru, passwordLama, passwordBaru){
       body: JSON.stringify({ aksi: 'gantiakun', id: id, usernameBaru: usernameBaru, passwordLama: passwordLama, passwordBaru: passwordBaru })
     });
     const data = await res.json();
-    if(data.ok) setLoggedInUser(usernameBaru);
+    if(data.ok){
+      setLoggedInUser(usernameBaru);
+      // Sekarang akun ini sudah punya baris override di Sheet, jadi verifikasi
+      // password sekarang untuk perubahan berikutnya harus lewat backend, bukan
+      // dibandingkan lagi ke password default di daftar-pengguna.js.
+      setLoggedInSrc('sheet');
+    }
     return data;
   }catch(err){
     return { ok:false, error:'Gagal terhubung ke server, cek koneksi internet.' };
@@ -2331,7 +2355,7 @@ function closeGantiPasswordModal(){document.getElementById('gantiPasswordModal')
 function showLogoutModal(){document.getElementById('logoutModal').classList.add('show');}
 function closeLogoutModal(){document.getElementById('logoutModal').classList.remove('show');}
 function doLogout(){
-  closeLogoutModal();clearLoggedInUser();clearLoggedInId();localStorage.removeItem(ACTIVE_PAGE_KEY);
+  closeLogoutModal();clearLoggedInUser();clearLoggedInId();clearLoggedInSrc();localStorage.removeItem(ACTIVE_PAGE_KEY);
   if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
   if(qcState&&qcState.interval){clearInterval(qcState.interval);qcState.interval=null;}
   hideSidebarToggle();

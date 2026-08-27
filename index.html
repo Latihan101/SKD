@@ -2078,7 +2078,7 @@ function setRandomQuote(){
 // PENTING: ini backend TERPISAH khusus app Latihan SKD ini, BUKAN backend
 // "Pengantar Statistika / Kelas Digital". Isi URL deployment Web App dari
 // project Backend_Login_LatihanSKD.gs (Sheet & project sendiri).
-const GAS_LOGIN_URL = 'https://script.google.com/macros/s/AKfycbyqXpfd5FJ1ufEexbe7O1rH87zZe6NnGwAWoaCXRld-DOVY9Lq4nOy94t6MRBffabZ3UQ/exec';
+const GAS_LOGIN_URL = 'https://script.google.com/macros/s/AKfycbxERMZMczuGkvNPAmBGnnCDKqidNhyzaCqYncOSGTcMAR_pXEr046bHqzIRMuomk4fBYQ/exec';
 
 // ========== SESSION ==========
 const SESSION_KEY='skd_logged_in_user';
@@ -2112,6 +2112,19 @@ function clearLoggedInSrc(){localStorage.removeItem(SESSION_SRC_KEY);}
 function saveActivePage(p){if(!NON_RESTORABLE.includes(p))localStorage.setItem(ACTIVE_PAGE_KEY,p);}
 function getLastActivePage(){return localStorage.getItem(ACTIVE_PAGE_KEY)||'homePage';}
 
+// Fetch dengan batas waktu -- kalau server lambat/tidak respon, request dibatalkan
+// setelah beberapa detik alih-alih menggantung selamanya (mis. tombol tetap
+// "Memeriksa..." tanpa henti).
+async function fetchDenganTimeout_(url, options, timeoutMs){
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), timeoutMs);
+  try{
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function doLogin(){
   const username = document.getElementById('inputUsername').value.trim();
   const password = document.getElementById('inputPassword').value;
@@ -2135,10 +2148,10 @@ async function doLogin(){
     const candidateId = kandidatDefault ? kandidatDefault.id : '';
 
     // 1) Cek dulu ke Google Sheet (akun yang sudah pernah ganti username/password)
-    const res = await fetch(GAS_LOGIN_URL, {
+    const res = await fetchDenganTimeout_(GAS_LOGIN_URL, {
       method: 'POST',
       body: JSON.stringify({ aksi: 'login', username: username, password: password, candidateId: candidateId })
-    });
+    }, 15000);
     const data = await res.json();
 
     if(data.ok){
@@ -2184,7 +2197,9 @@ async function doLogin(){
       : '⚠️ Username tidak terdaftar. Hubungi admin untuk didaftarkan.';
     errEl.classList.add('show');
   }catch(err){
-    errEl.textContent = '⚠️ Gagal terhubung ke server, cek koneksi internet.';
+    errEl.textContent = (err && err.name === 'AbortError')
+      ? '⚠️ Server terlalu lama merespon. Coba lagi sebentar lagi.'
+      : '⚠️ Gagal terhubung ke server, cek koneksi internet.';
     errEl.classList.add('show');
   }finally{
     btn.disabled = false;
@@ -2235,10 +2250,10 @@ async function kirimGantiAkun_(usernameBaru, passwordLama, passwordBaru){
   // cocokLokal === null -> akun sudah override, verifikasi password dilakukan backend.
 
   try{
-    const res = await fetch(GAS_LOGIN_URL, {
+    const res = await fetchDenganTimeout_(GAS_LOGIN_URL, {
       method: 'POST',
       body: JSON.stringify({ aksi: 'gantiakun', id: id, usernameBaru: usernameBaru, passwordLama: passwordLama, passwordBaru: passwordBaru })
-    });
+    }, 15000);
     const data = await res.json();
     if(data.ok){
       setLoggedInUser(usernameBaru);
@@ -2623,10 +2638,10 @@ async function syncProgressToServer(){
   if(!id) return;
   try{
     const bundle=collectProgressBundle_();
-    await fetch(GAS_LOGIN_URL, {
+    await fetchDenganTimeout_(GAS_LOGIN_URL, {
       method:'POST',
       body: JSON.stringify({ aksi:'simpanprogres', id:id, data:bundle })
-    });
+    }, 15000);
   }catch(e){ /* gagal sinkron diam-diam saja, tidak ganggu pemakaian offline */ }
 }
 
@@ -2634,10 +2649,10 @@ async function loadProgressFromServer(){
   const id=getLoggedInId();
   if(!id) return;
   try{
-    const res=await fetch(GAS_LOGIN_URL, {
+    const res=await fetchDenganTimeout_(GAS_LOGIN_URL, {
       method:'POST',
       body: JSON.stringify({ aksi:'ambilprogres', id:id })
-    });
+    }, 15000);
     const data=await res.json();
     if(data.ok && data.data){
       applyProgressBundle_(data.data);

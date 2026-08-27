@@ -2200,6 +2200,7 @@ function finishLoginSuccess_(){
   refreshHomeStats();
   setRandomQuote();
   updateHeaderAnim();
+  loadProgressFromServer();
 }
 
 // Verifikasi password saat ini terhadap akun aktif (default di daftar-pengguna.js
@@ -2355,7 +2356,7 @@ function closeGantiPasswordModal(){document.getElementById('gantiPasswordModal')
 function showLogoutModal(){document.getElementById('logoutModal').classList.add('show');}
 function closeLogoutModal(){document.getElementById('logoutModal').classList.remove('show');}
 function doLogout(){
-  closeLogoutModal();clearLoggedInUser();clearLoggedInId();clearLoggedInSrc();localStorage.removeItem(ACTIVE_PAGE_KEY);
+  syncProgressToServer();closeLogoutModal();clearLoggedInUser();clearLoggedInId();clearLoggedInSrc();localStorage.removeItem(ACTIVE_PAGE_KEY);
   if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
   if(qcState&&qcState.interval){clearInterval(qcState.interval);qcState.interval=null;}
   hideSidebarToggle();
@@ -2515,6 +2516,7 @@ window.addEventListener('popstate',function(e){
     if(targetPage === 'pencapaianPage') refreshPencapaian();
     if(targetPage === 'quizCepatPage') renderQuizCepatGrid();
     if(targetPage === 'akunPage') refreshAkunPage();
+    loadProgressFromServer();
     if(targetPage !== 'homePage'){
       history.replaceState({page:'homePage'},'','');
       history.pushState({page:targetPage},'','');
@@ -2527,10 +2529,132 @@ window.addEventListener('popstate',function(e){
   }
 })();
 
+// ========== SINKRONISASI PROGRES (biar bisa dibuka di browser/device lain) ==========
+// Semua data progres (skor, achievement, riwayat quiz cepat, dll) tetap disimpan
+// di localStorage seperti biasa (biar tetap cepat & jalan walau offline), TAPI
+// juga dikirim ke Sheet "Progress" (dikaitkan ke id akun, bukan ke device).
+// Saat login/refresh, data dari server ditarik lalu DIGABUNG ke lokal:
+// - Untuk skor/hitungan: ambil yang PALING TINGGI (progres tidak pernah mundur)
+// - Untuk achievement & status "sudah dibuka": digabung (union), bukan ditimpa
+// Jadi aman dipakai gantian di 2 device tanpa takut progres salah satu hilang.
+
+const PROGRESS_STATIC_KEYS = ['materiOpened','menuVisited','simulasiCount','simulasiLulusBerturut','simulasi_last','achUnlocked'];
+
+function progressDynamicKeys_(){
+  const keys=[];
+  for(let i=1;i<=5;i++){
+    keys.push(`skorTWK_latihan${i}`,`skorTIU_latihan${i}`,`skorTKP_latihan${i}`,`bestScore_latihan${i}`,`evalData_latihan${i}`,`paketUlangi_${i}`);
+  }
+  ['twk','tiu','tkp'].forEach(cat=>{
+    [1,3,5,10].forEach(m=>keys.push(`qcBest_${cat}_${m}m`));
+    keys.push(`qcTotalSesi_${cat}`,`qcStreakMax_${cat}`,`qcNoWrong_${cat}`,`qcAkurasi90_${cat}`);
+  });
+  return keys;
+}
+
+function collectProgressBundle_(){
+  const bundle={};
+  [...PROGRESS_STATIC_KEYS, ...progressDynamicKeys_()].forEach(key=>{
+    const v=localStorage.getItem(key);
+    if(v!==null) bundle[key]=v;
+  });
+  return bundle;
+}
+
+// Angka yang sifatnya "rekor/akumulasi" -> saat digabung, ambil yang lebih besar
+const PROGRESS_NUMERIC_MAX_RE = /^(skorTWK|skorTIU|skorTKP|bestScore|qcBest|qcTotalSesi|qcStreakMax|qcNoWrong|qcAkurasi90|simulasiCount|simulasiLulusBerturut|paketUlangi)/;
+
+function mergeProgressBundles_(local, remote){
+  const result={};
+  const allKeys=new Set([...Object.keys(local), ...Object.keys(remote)]);
+  allKeys.forEach(key=>{
+    const a=local[key], b=remote[key];
+    if(a===undefined){ result[key]=b; return; }
+    if(b===undefined){ result[key]=a; return; }
+    if(PROGRESS_NUMERIC_MAX_RE.test(key)){
+      result[key]=String(Math.max(parseInt(a)||0, parseInt(b)||0));
+      return;
+    }
+    if(key==='achUnlocked'){
+      try{ result[key]=JSON.stringify(Array.from(new Set([...(JSON.parse(a)||[]), ...(JSON.parse(b)||[])]))); }
+      catch(e){ result[key]=b; }
+      return;
+    }
+    if(key==='materiOpened'||key==='menuVisited'){
+      try{ result[key]=JSON.stringify(Object.assign({}, JSON.parse(a)||{}, JSON.parse(b)||{})); }
+      catch(e){ result[key]=b; }
+      return;
+    }
+    if(key.startsWith('evalData_latihan')){
+      // Ikuti sisi mana yang bestScore paket ini lebih tinggi (dianggap riwayat yang relevan)
+      const setId=key.replace('evalData_latihan','');
+      const localBest=parseInt(local[`bestScore_latihan${setId}`])||0;
+      const remoteBest=parseInt(remote[`bestScore_latihan${setId}`])||0;
+      result[key]=remoteBest>localBest?b:a;
+      return;
+    }
+    if(key==='simulasi_last'){
+      // Ikuti sisi dengan simulasiCount lebih besar (dianggap snapshot lebih baru)
+      const localCount=parseInt(local.simulasiCount)||0, remoteCount=parseInt(remote.simulasiCount)||0;
+      result[key]=remoteCount>=localCount?b:a;
+      return;
+    }
+    result[key]=b; // default: pakai dari server
+  });
+  return result;
+}
+
+function applyProgressBundle_(remoteBundle){
+  if(!remoteBundle) return;
+  const localBundle=collectProgressBundle_();
+  const merged=mergeProgressBundles_(localBundle, remoteBundle);
+  Object.keys(merged).forEach(key=>localStorage.setItem(key, merged[key]));
+  achUnlocked=JSON.parse(localStorage.getItem('achUnlocked')||'[]');
+}
+
+let _progressSyncTimer=null;
+function scheduleProgressSync(){
+  if(_progressSyncTimer) clearTimeout(_progressSyncTimer);
+  _progressSyncTimer=setTimeout(syncProgressToServer, 1500);
+}
+
+async function syncProgressToServer(){
+  const id=getLoggedInId();
+  if(!id) return;
+  try{
+    const bundle=collectProgressBundle_();
+    await fetch(GAS_LOGIN_URL, {
+      method:'POST',
+      body: JSON.stringify({ aksi:'simpanprogres', id:id, data:bundle })
+    });
+  }catch(e){ /* gagal sinkron diam-diam saja, tidak ganggu pemakaian offline */ }
+}
+
+async function loadProgressFromServer(){
+  const id=getLoggedInId();
+  if(!id) return;
+  try{
+    const res=await fetch(GAS_LOGIN_URL, {
+      method:'POST',
+      body: JSON.stringify({ aksi:'ambilprogres', id:id })
+    });
+    const data=await res.json();
+    if(data.ok && data.data){
+      applyProgressBundle_(data.data);
+      refreshHomeStats();
+      const activeEl=document.querySelector('.page.active');
+      const activeId=activeEl?activeEl.id:'';
+      if(activeId==='quizlistPage') refreshQuizList();
+      if(activeId==='statistikPage') refreshStatistik();
+      if(activeId==='pencapaianPage') refreshPencapaian();
+    }
+  }catch(e){ /* offline / gagal ambil -> tetap pakai data lokal yang ada */ }
+}
+
 // ========== TRACKING ==========
-function markMateriOpened(kat){const d=JSON.parse(localStorage.getItem('materiOpened')||'{}');d[kat]=true;localStorage.setItem('materiOpened',JSON.stringify(d));}
+function markMateriOpened(kat){const d=JSON.parse(localStorage.getItem('materiOpened')||'{}');d[kat]=true;localStorage.setItem('materiOpened',JSON.stringify(d));scheduleProgressSync();}
 function getMateriOpened(){return JSON.parse(localStorage.getItem('materiOpened')||'{}');}
-function markMenuVisited(menu){const d=JSON.parse(localStorage.getItem('menuVisited')||'{}');d[menu]=true;localStorage.setItem('menuVisited',JSON.stringify(d));}
+function markMenuVisited(menu){const d=JSON.parse(localStorage.getItem('menuVisited')||'{}');d[menu]=true;localStorage.setItem('menuVisited',JSON.stringify(d));scheduleProgressSync();}
 function getMenuVisited(){return JSON.parse(localStorage.getItem('menuVisited')||'{}');}
 
 // ========== HOME STATS ==========
@@ -2885,6 +3009,7 @@ function finishQuizCepat(){
   setQCStreakMax(cat,qcState.streakMax);
   if(qcState.noWrong&&total>0)setQCNoWrongBest(cat,total);
   if(total>0&&Math.round(benar/total*100)>=90)setQCAkurasi90(cat,true);
+  scheduleProgressSync();
   const pct=total>0?Math.round(benar/total*100):0;
   let icon='😅',title='Terus Semangat!';
   if(pct>=90){icon='🏆';title='Luar Biasa!';}else if(pct>=70){icon='🎯';title='Bagus Sekali!';}else if(pct>=50){icon='💪';title='Cukup Baik!';}
@@ -3222,6 +3347,7 @@ function finishQuiz(){
     localStorage.setItem(`evalData_latihan${activeSet}`,JSON.stringify(ed));
     const key=`bestScore_latihan${activeSet}`;const prev=localStorage.getItem(key);if(prev===null||s.total>parseInt(prev))localStorage.setItem(key,s.total);
   }
+  scheduleProgressSync();
   const mTWK=s.mTWK||150,mTIU=s.mTIU||175,mTKP=s.mTKP||225,mTot=s.mTot||(mTWK+mTIU+mTKP);
   document.getElementById('resultSubtitle').textContent=wasSimulasi?'⏰ Hasil Simulasi SKD':`📝 Latihan SKD Paket ${activeSet}`;
   document.getElementById('resTotalScore').textContent=s.total;
@@ -3308,6 +3434,7 @@ function checkNewAchievements(){
   });
   if(newlyUnlocked.length>0){
     localStorage.setItem('achUnlocked',JSON.stringify(achUnlocked));
+    scheduleProgressSync();
     newlyUnlocked.forEach(b=>achQueue.push(b));
     showNextAch();
   }
@@ -3336,6 +3463,7 @@ function resetAllProgress(){
   localStorage.removeItem('simulasi_last');localStorage.removeItem('simulasiCount');localStorage.removeItem('simulasiLulusBerturut');localStorage.removeItem('materiOpened');localStorage.removeItem('menuVisited');
   ['twk','tiu','tkp'].forEach(cat=>{[1,3,5,10].forEach(m=>localStorage.removeItem(`qcBest_${cat}_${m}m`));localStorage.removeItem(`qcTotalSesi_${cat}`);localStorage.removeItem(`qcStreakMax_${cat}`);localStorage.removeItem(`qcNoWrong_${cat}`);localStorage.removeItem(`qcAkurasi90_${cat}`);});
   localStorage.removeItem('achUnlocked');achUnlocked=[];
+  syncProgressToServer();
   refreshQuizList();refreshHomeStats();closeResetModal();playSound('back');alert('✅ Semua progress telah direset!');
 }
 // ========== LOG AKTIVITAS / NOTIFIKASI ==========

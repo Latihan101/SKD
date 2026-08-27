@@ -2148,10 +2148,24 @@ async function doLogin(){
     const candidateId = kandidatDefault ? kandidatDefault.id : '';
 
     // 1) Cek dulu ke Google Sheet (akun yang sudah pernah ganti username/password)
-    const res = await fetchDenganTimeout_(GAS_LOGIN_URL, {
-      method: 'POST',
-      body: JSON.stringify({ aksi: 'login', username: username, password: password, candidateId: candidateId })
-    }, 15000);
+    // CATATAN COLD START: request pertama ke Apps Script kadang lambat kalau
+    // script-nya lagi "nganggur" (belum ada yang manggil beberapa saat). Kalau
+    // percobaan pertama kena timeout, coba SEKALI LAGI otomatis dengan waktu
+    // tunggu lebih panjang sebelum benar-benar dianggap gagal ke user.
+    let res;
+    try{
+      res = await fetchDenganTimeout_(GAS_LOGIN_URL, {
+        method: 'POST',
+        body: JSON.stringify({ aksi: 'login', username: username, password: password, candidateId: candidateId })
+      }, 15000);
+    }catch(errPertama){
+      if(!errPertama || errPertama.name !== 'AbortError') throw errPertama;
+      btn.textContent = 'Server baru bangun, coba lagi...';
+      res = await fetchDenganTimeout_(GAS_LOGIN_URL, {
+        method: 'POST',
+        body: JSON.stringify({ aksi: 'login', username: username, password: password, candidateId: candidateId })
+      }, 25000);
+    }
     const data = await res.json();
 
     if(data.ok){
@@ -2644,6 +2658,26 @@ async function syncProgressToServer(){
     }, 15000);
   }catch(e){ /* gagal sinkron diam-diam saja, tidak ganggu pemakaian offline */ }
 }
+
+// Jaga-jaga: kalau tab ditutup / pindah app SEBELUM debounce 1.5 detik di
+// scheduleProgressSync() sempat jalan, progres terakhir bisa gak kekirim ke
+// server. navigator.sendBeacon dirancang khusus buat kasus ini -- kirim data
+// terakhir pas halaman mau ditutup, jalan di background, gak bikin nutup tab
+// jadi lambat, dan tetap terkirim walau tab sudah gak aktif lagi.
+function flushProgressSyncBeacon_(){
+  const id = getLoggedInId();
+  if(!id) return;
+  if(_progressSyncTimer){ clearTimeout(_progressSyncTimer); _progressSyncTimer = null; }
+  try{
+    const bundle = collectProgressBundle_();
+    const payload = JSON.stringify({ aksi:'simpanprogres', id:id, data:bundle });
+    navigator.sendBeacon(GAS_LOGIN_URL, new Blob([payload], { type:'text/plain;charset=UTF-8' }));
+  }catch(e){ /* tab sudah mau tertutup, tidak ada lagi yang bisa dilakukan kalau gagal */ }
+}
+window.addEventListener('pagehide', flushProgressSyncBeacon_);
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState === 'hidden') flushProgressSyncBeacon_();
+});
 
 async function loadProgressFromServer(){
   const id=getLoggedInId();

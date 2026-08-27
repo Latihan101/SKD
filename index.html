@@ -374,14 +374,15 @@ body{
 .fontsize-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .fontsize-head-left{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--gray);font-weight:600;}
 .fontsize-preview-badge{font-size:11px;font-weight:800;color:var(--blue);background:var(--bg);padding:3px 10px;border-radius:20px;}
-.fontsize-row{display:flex;gap:6px;}
-.fontsize-btn{flex:1;padding:9px 4px;border:1.5px solid var(--border);border-radius:10px;background:#F8FAFC;font-weight:700;color:var(--gray);cursor:pointer;text-align:center;transition:.15s;line-height:1.2;}
+.fontsize-row{display:flex;gap:4px;}
+.fontsize-btn{flex:1;padding:8px 2px;border:1.5px solid var(--border);border-radius:10px;background:#F8FAFC;font-weight:700;color:var(--gray);cursor:pointer;text-align:center;transition:.15s;line-height:1.2;}
 .fontsize-btn .fb-a{display:block;}
-.fontsize-btn:nth-child(1) .fb-a{font-size:11px;}
-.fontsize-btn:nth-child(2) .fb-a{font-size:13px;}
-.fontsize-btn:nth-child(3) .fb-a{font-size:15px;}
-.fontsize-btn:nth-child(4) .fb-a{font-size:17px;}
-.fontsize-btn .fb-l{display:block;font-size:9px;font-weight:700;margin-top:3px;opacity:.75;}
+.fontsize-btn:nth-child(1) .fb-a{font-size:10px;}
+.fontsize-btn:nth-child(2) .fb-a{font-size:12px;}
+.fontsize-btn:nth-child(3) .fb-a{font-size:14px;}
+.fontsize-btn:nth-child(4) .fb-a{font-size:16px;}
+.fontsize-btn:nth-child(5) .fb-a{font-size:18px;}
+.fontsize-btn .fb-l{display:block;font-size:8.5px;font-weight:700;margin-top:3px;opacity:.75;}
 .fontsize-btn.active{background:var(--blue);color:#fff;border-color:var(--blue);}
 .fontsize-btn:active{transform:scale(.96);}
 .fontsize-example{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--bg);color:#334155;line-height:1.5;text-align:justify;}
@@ -1247,6 +1248,7 @@ input:checked+.slider:before{transform:translateX(22px);}
             <span class="fontsize-preview-badge" id="fsSoalBadge">Sedang</span>
           </div>
           <div class="fontsize-row" id="fsSoalRow">
+            <button type="button" class="fontsize-btn" data-scale="0.7"><span class="fb-a">A</span><span class="fb-l">X-Kecil</span></button>
             <button type="button" class="fontsize-btn" data-scale="0.85"><span class="fb-a">A</span><span class="fb-l">Kecil</span></button>
             <button type="button" class="fontsize-btn" data-scale="1"><span class="fb-a">A</span><span class="fb-l">Sedang</span></button>
             <button type="button" class="fontsize-btn" data-scale="1.15"><span class="fb-a">A</span><span class="fb-l">Besar</span></button>
@@ -1260,6 +1262,7 @@ input:checked+.slider:before{transform:translateX(22px);}
             <span class="fontsize-preview-badge" id="fsUmumBadge">Sedang</span>
           </div>
           <div class="fontsize-row" id="fsUmumRow">
+            <button type="button" class="fontsize-btn" data-scale="0.7"><span class="fb-a">A</span><span class="fb-l">X-Kecil</span></button>
             <button type="button" class="fontsize-btn" data-scale="0.85"><span class="fb-a">A</span><span class="fb-l">Kecil</span></button>
             <button type="button" class="fontsize-btn" data-scale="1"><span class="fb-a">A</span><span class="fb-l">Sedang</span></button>
             <button type="button" class="fontsize-btn" data-scale="1.15"><span class="fb-a">A</span><span class="fb-l">Besar</span></button>
@@ -2812,7 +2815,7 @@ function getSoundEnabled(){const v=localStorage.getItem('soundEnabled');return v
 function setSoundEnabled(v){localStorage.setItem('soundEnabled',v);}
 
 // ========== FONT SIZE SETTINGS ==========
-const FS_LABELS={'0.85':'Kecil','1':'Sedang','1.15':'Besar','1.3':'X-Besar'};
+const FS_LABELS={'0.7':'X-Kecil','0.85':'Kecil','1':'Sedang','1.15':'Besar','1.3':'X-Besar'};
 function getFontScale(type){
   const v=localStorage.getItem('fontScale_'+type);
   return v===null?'1':v;

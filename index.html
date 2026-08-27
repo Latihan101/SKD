@@ -1211,6 +1211,35 @@ input:checked+.slider:before{transform:translateX(22px);}
         <div class="akun-row"><span class="akun-row-left"><span data-icon="icon_akun_lulus"></span> Total Lulus PG</span><span class="akun-row-val" id="akunLulus">0</span></div>
         <div class="akun-row"><span class="akun-row-left"><span data-icon="icon_akun_qc"></span> Sesi Quiz Cepat</span><span class="akun-row-val" id="akunQCSesi">0</span></div>
       </div>
+      <div class="akun-info-card" style="margin-bottom:12px;padding:0;">
+        <div class="akun-row" style="padding:14px 16px;cursor:pointer;" onclick="playSound('menu');goTo('pengaturanPage')">
+          <span class="akun-row-left">⚙️ Pengaturan Sistem</span>
+          <span class="menu-chevron" data-icon="icon_chevron"></span>
+        </div>
+      </div>
+      <button class="btn-logout" style="background:var(--gray-light);color:var(--dark);margin-bottom:10px;" onclick="playSound('back');showGantiUsernameModal()"><span data-icon="icon_akun_nama"></span> Ganti Username</button>
+      <button class="btn-logout" style="background:var(--gray-light);color:var(--dark);margin-bottom:10px;" onclick="playSound('back');showGantiPasswordModal()"><span data-icon="icon_akun_nama"></span> Ganti Password</button>
+      <button class="btn-logout" onclick="playSound('back');showLogoutModal()"><span data-icon="icon_akun_logout"></span> Logout dari User Ini</button>
+    </div>
+    
+  </div>
+</div>
+
+<!-- =========== PENGATURAN SISTEM PAGE =========== -->
+<div id="pengaturanPage" class="page">
+  <div style="background:var(--bg);min-height:100vh;padding-bottom:80px;">
+
+    <!-- HEADER FIXED -->
+    <div style="position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:50;background:#fff;display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.05);">
+      <button class="btn-back" data-icon="icon_back" onclick="playSound('back');goTo('akunPage')"></button>
+      <h2 style="font-size:17px;font-weight:800;color:var(--dark);flex:1;margin:0;">⚙️ Pengaturan Sistem</h2>
+    </div>
+
+    <!-- SPACER -->
+    <div style="height:70px;"></div>
+
+    <!-- KONTEN -->
+    <div class="akun-wrap">
       <div class="akun-info-card" style="margin-bottom:12px;">
         <div class="fontsize-block">
           <div class="fontsize-head">
@@ -1240,19 +1269,16 @@ input:checked+.slider:before{transform:translateX(22px);}
         </div>
       </div>
       <div class="akun-info-card" style="margin-bottom:12px;">
-  <div class="akun-row">
-    <span class="akun-row-left"><span data-icon="icon_akun_sound"></span> Efek Suara</span>
-    <label class="switch">
-      <input type="checkbox" id="soundToggle" onchange="toggleSound(this.checked)">
-      <span class="slider"></span>
-    </label>
-  </div>
-</div>
-      <button class="btn-logout" style="background:var(--gray-light);color:var(--dark);margin-bottom:10px;" onclick="playSound('back');showGantiUsernameModal()"><span data-icon="icon_akun_nama"></span> Ganti Username</button>
-      <button class="btn-logout" style="background:var(--gray-light);color:var(--dark);margin-bottom:10px;" onclick="playSound('back');showGantiPasswordModal()"><span data-icon="icon_akun_nama"></span> Ganti Password</button>
-      <button class="btn-logout" onclick="playSound('back');showLogoutModal()"><span data-icon="icon_akun_logout"></span> Logout dari User Ini</button>
+        <div class="akun-row">
+          <span class="akun-row-left"><span data-icon="icon_akun_sound"></span> Efek Suara</span>
+          <label class="switch">
+            <input type="checkbox" id="soundToggle" onchange="toggleSound(this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
     </div>
-    
+
   </div>
 </div>
 
@@ -2232,7 +2258,7 @@ const PAGE_PARENT={
   tentangPage:'homePage',pencapaianPage:'homePage',quizCepatPage:'homePage',
   quizCepatConfirmPage:'quizCepatPage',quizCepatResultPage:'quizCepatPage',quizCepatPlayPage:'quizCepatPage',
   akunPage:'homePage',resultPage:'quizlistPage',
-  evaluasiListPage:'quizlistPage',
+  evaluasiListPage:'quizlistPage',pengaturanPage:'akunPage',
 };
 function getLoggedInUser(){return localStorage.getItem(SESSION_KEY)||null;}
 function setLoggedInUser(u){localStorage.setItem(SESSION_KEY,u);}
@@ -2569,7 +2595,7 @@ function updateNavHighlight(pageId){
 // ========== PAGE SYSTEM ==========
 const PAGES=['homePage','quizlistPage','materiPage','materiContentPage','statistikPage','simulasiPage',
   'petunjukPage','tentangPage','quizPage','resultPage','evaluasiListPage','pencapaianPage',
-  'quizCepatPage','quizCepatConfirmPage','quizCepatPlayPage','quizCepatResultPage','akunPage','loginPage','reviewPage'];
+  'quizCepatPage','quizCepatConfirmPage','quizCepatPlayPage','quizCepatResultPage','akunPage','loginPage','reviewPage','pengaturanPage'];
 const PAGES_WITH_SIDEBAR=['quizPage'];
 let currentPage='loginPage';
 
@@ -2635,6 +2661,7 @@ function goTo(pageId){
   if(pageId==='pencapaianPage')refreshPencapaian();
   if(pageId==='quizCepatPage')renderQuizCepatGrid();
   if(pageId==='akunPage')refreshAkunPage();
+  if(pageId==='pengaturanPage')syncSoundToggle();
   history.pushState({page:pageId},'','');
 }
 
@@ -2670,7 +2697,7 @@ window.addEventListener('popstate',function(e){
       'quizlistPage','simulasiPage','pencapaianPage','statistikPage',
       'materiPage','materiContentPage','quizCepatPage','quizCepatConfirmPage',
       'quizCepatResultPage','akunPage','petunjukPage','tentangPage',
-      'resultPage','evaluasiListPage'
+      'resultPage','evaluasiListPage','pengaturanPage'
     ];
     const restorable = PAGES.filter(p =>
       !NON_RESTORABLE.includes(p) && !FORCE_HOME_ON_REFRESH.includes(p)

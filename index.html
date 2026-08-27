@@ -36,6 +36,7 @@ body::-webkit-scrollbar,
   --gray:#64748b;--gray-light:#F1F5F9;--border:#E2E8F0;--dark:#1E293B;
   --radius:16px;--radius-sm:12px;--radius-xs:8px;
   --shadow:0 2px 12px rgba(21,101,192,.10);
+  --fs-scale-soal:1;--fs-scale-umum:1;
 }
 body{
   font-family:'Segoe UI',system-ui,sans-serif;
@@ -146,9 +147,9 @@ body{
   border:1.5px solid #fff;
 }
 .greeting-text{flex:1;}
-.greeting-text .gday{font-size:12px;color:rgba(255,255,255,.8);font-weight:500;}
-.greeting-text .gname{font-size:17px;color:#fff;font-weight:800;line-height:1.2;}
-.greeting-text .gmotto{font-size:11px;color:rgba(255,255,255,.65);margin-top:1px;}
+.greeting-text .gday{font-size:calc(12px * var(--fs-scale-umum));color:rgba(255,255,255,.8);font-weight:500;}
+.greeting-text .gname{font-size:calc(17px * var(--fs-scale-umum));color:#fff;font-weight:800;line-height:1.2;}
+.greeting-text .gmotto{font-size:calc(11px * var(--fs-scale-umum));color:rgba(255,255,255,.65);margin-top:1px;}
 .notif-btn{
   width:40px;height:40px;border-radius:50%;
   background:rgba(255,255,255,.15);border:none;
@@ -243,8 +244,8 @@ body{
 .streak-left .streak-sub{font-size:10px;color:rgba(255,255,255,.85);font-weight:600;margin-top:3px;}
 .streak-left .streak-label{font-size:11px;color:rgba(255,255,255,.75);margin-top:2px;}
 .streak-right{flex:1;}
-.quote-text{font-size:13px;color:#37474F;line-height:1.55;font-style:italic;margin-bottom:6px;}
-.quote-author{font-size:11px;color:var(--gray);font-weight:700;}
+.quote-text{font-size:calc(13px * var(--fs-scale-umum));color:#37474F;line-height:1.55;font-style:italic;margin-bottom:6px;}
+.quote-author{font-size:calc(11px * var(--fs-scale-umum));color:var(--gray);font-weight:700;}
 
 /* ========== SECTION TITLE ========== */
 .section-title{
@@ -263,8 +264,8 @@ body{
 .menu-item:active{transform:scale(.96);box-shadow:0 2px 8px rgba(0,0,0,.08);}
 .menu-item-left{display:flex;flex-direction:column;gap:6px;}
 .menu-icon-wrap{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:2px;}
-.menu-item-name{font-size:14px;font-weight:700;color:var(--dark);}
-.menu-item-desc{font-size:11px;color:var(--gray);line-height:1.4;}
+.menu-item-name{font-size:calc(14px * var(--fs-scale-umum));font-weight:700;color:var(--dark);}
+.menu-item-desc{font-size:calc(11px * var(--fs-scale-umum));color:var(--gray);line-height:1.4;}
 .menu-chevron{color:#CBD5E1;font-size:18px;font-weight:300;}
 .menu-icon-wrap.blue{background:#E3F2FD;}
 .menu-icon-wrap.purple{background:#F3E5F5;}
@@ -350,8 +351,8 @@ body{
 .akun-info-card{background:#fff;border-radius:16px;padding:16px;box-shadow:var(--shadow);margin-bottom:12px;}
 .akun-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);}
 .akun-row:last-child{border-bottom:none;padding-bottom:0;}
-.akun-row-left{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--gray);font-weight:600;}
-.akun-row-val{font-size:13px;font-weight:800;color:var(--dark);}
+.akun-row-left{display:flex;align-items:center;gap:10px;font-size:calc(13px * var(--fs-scale-umum));color:var(--gray);font-weight:600;}
+.akun-row-val{font-size:calc(13px * var(--fs-scale-umum));font-weight:800;color:var(--dark);}
 .btn-logout{
   width:100%;padding:14px;border:none;border-radius:14px;
   background:linear-gradient(135deg,#C62828,#EF5350);
@@ -365,6 +366,27 @@ body{
   background:var(--bg);color:var(--dark);font-size:14px;font-weight:700;cursor:pointer;transition:.2s;
 }
 .btn-back-secondary:active{background:var(--border);}
+
+/* ========== FONT SIZE SETTINGS (Profil) ========== */
+.fontsize-block{padding:12px 0;border-bottom:1px solid var(--border);}
+.fontsize-block:last-child{border-bottom:none;padding-bottom:0;}
+.fontsize-block:first-child{padding-top:0;}
+.fontsize-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.fontsize-head-left{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--gray);font-weight:600;}
+.fontsize-preview-badge{font-size:11px;font-weight:800;color:var(--blue);background:var(--bg);padding:3px 10px;border-radius:20px;}
+.fontsize-row{display:flex;gap:6px;}
+.fontsize-btn{flex:1;padding:9px 4px;border:1.5px solid var(--border);border-radius:10px;background:#F8FAFC;font-weight:700;color:var(--gray);cursor:pointer;text-align:center;transition:.15s;line-height:1.2;}
+.fontsize-btn .fb-a{display:block;}
+.fontsize-btn:nth-child(1) .fb-a{font-size:11px;}
+.fontsize-btn:nth-child(2) .fb-a{font-size:13px;}
+.fontsize-btn:nth-child(3) .fb-a{font-size:15px;}
+.fontsize-btn:nth-child(4) .fb-a{font-size:17px;}
+.fontsize-btn .fb-l{display:block;font-size:9px;font-weight:700;margin-top:3px;opacity:.75;}
+.fontsize-btn.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+.fontsize-btn:active{transform:scale(.96);}
+.fontsize-example{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--bg);color:#334155;line-height:1.5;text-align:justify;}
+.fontsize-example.fs-ex-soal{font-size:calc(14px * var(--fs-scale-soal));}
+.fontsize-example.fs-ex-umum{font-size:calc(13px * var(--fs-scale-umum));}
 
 /* ========== QUIZ LIST PAGE ========== */
 .quizlist-wrap{padding:16px;}
@@ -427,16 +449,16 @@ input:checked+.slider:before{transform:translateX(22px);}
 .evaluasi-item.benar{border-left-color:#00897B;background:#E0F2F1;}
 .evaluasi-item.salah{border-left-color:#C62828;background:#FFEBEE;}
 .evaluasi-item.belum{border-left-color:#F57C00;background:#FFF8E1;}
-.evaluasi-item .soal-teks{font-weight:700;margin-bottom:5px;font-size:13px;color:var(--dark);}
-.evaluasi-item .soal-isi{font-size:13px;margin-bottom:7px;color:#475569;line-height:1.5;text-align:justify;}
-.evaluasi-item .jawaban-user{font-size:13px;margin-bottom:4px;padding:7px 10px;border-radius:8px;background:#E2E8F0;text-align:justify;}
-.evaluasi-item .jawaban-benar{font-size:13px;margin-bottom:4px;padding:7px 10px;border-radius:8px;background:#E0F2F1;color:#004D40;text-align:justify;}
-.evaluasi-item .pembahasan-box{margin-top:8px;padding:10px 12px;border-radius:8px;background:#E3F2FD;border-left:3px solid var(--blue);font-size:12px;color:#0D47A1;line-height:1.6;text-align:justify;}
+.evaluasi-item .soal-teks{font-weight:700;margin-bottom:5px;font-size:calc(13px * var(--fs-scale-soal));color:var(--dark);}
+.evaluasi-item .soal-isi{font-size:calc(13px * var(--fs-scale-soal));margin-bottom:7px;color:#475569;line-height:1.5;text-align:justify;}
+.evaluasi-item .jawaban-user{font-size:calc(13px * var(--fs-scale-soal));margin-bottom:4px;padding:7px 10px;border-radius:8px;background:#E2E8F0;text-align:justify;}
+.evaluasi-item .jawaban-benar{font-size:calc(13px * var(--fs-scale-soal));margin-bottom:4px;padding:7px 10px;border-radius:8px;background:#E0F2F1;color:#004D40;text-align:justify;}
+.evaluasi-item .pembahasan-box{margin-top:8px;padding:10px 12px;border-radius:8px;background:#E3F2FD;border-left:3px solid var(--blue);font-size:calc(12px * var(--fs-scale-soal));color:#0D47A1;line-height:1.6;text-align:justify;}
 .pembahasan-box p{margin:4px 0 0;text-align:justify;}
 .pembahasan-box p:first-of-type{margin-top:4px;}
 .pembahasan-box strong{display:block;margin-bottom:3px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;}
 .eval-opts{margin:8px 0;display:flex;flex-direction:column;gap:6px;}
-.eval-opt{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:8px;background:#fff;border:1.5px solid var(--border);font-size:12.5px;line-height:1.5;color:#334155;text-align:justify;}
+.eval-opt{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:8px;background:#fff;border:1.5px solid var(--border);font-size:calc(12.5px * var(--fs-scale-soal));line-height:1.5;color:#334155;text-align:justify;}
 .eval-opt .eval-opt-letter{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#E2E8F0;color:#475569;font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center;}
 .eval-opt .eval-opt-text{flex:1;padding-top:2px;}
 .eval-opt .eval-opt-tag{flex-shrink:0;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;white-space:nowrap;}
@@ -473,8 +495,8 @@ input:checked+.slider:before{transform:translateX(22px);}
 .review-entry-card{flex:1;background:#fff;border-radius:14px;padding:14px 10px;text-align:center;box-shadow:var(--shadow);cursor:pointer;border:1.5px solid var(--border);}
 .review-entry-card:active{transform:scale(.97);}
 .review-entry-icon{font-size:22px;display:block;margin-bottom:4px;}
-.review-entry-label{font-size:12px;font-weight:700;color:var(--dark);display:block;}
-.review-entry-count{font-size:11px;color:var(--gray);font-weight:700;}
+.review-entry-label{font-size:calc(12px * var(--fs-scale-umum));font-weight:700;color:var(--dark);display:block;}
+.review-entry-count{font-size:calc(11px * var(--fs-scale-umum));color:var(--gray);font-weight:700;}
 
 /* ===== REVIEW PAGE (Bank Soal Salah & Bookmark) ===== */
 .review-tabs{display:flex;gap:22px;margin-bottom:16px;border-bottom:1.5px solid var(--border);}
@@ -486,9 +508,9 @@ input:checked+.slider:before{transform:translateX(22px);}
 .btn-mulai-review:disabled{opacity:.5;cursor:not-allowed;box-shadow:none;}
 .review-item{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow);}
 .review-item-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}
-.review-item-txt{font-size:13px;color:var(--dark);line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.review-item-txt{font-size:calc(13px * var(--fs-scale-umum));color:var(--dark);line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .review-item-foot{display:flex;justify-content:space-between;align-items:center;}
-.review-item-meta{font-size:11px;color:var(--gray);}
+.review-item-meta{font-size:calc(11px * var(--fs-scale-umum));color:var(--gray);}
 .btn-review-remove{border:none;background:#FFEBEE;color:#C62828;font-size:11px;font-weight:700;padding:6px 10px;border-radius:8px;cursor:pointer;flex-shrink:0;}
 .review-empty{text-align:center;padding:40px 16px;color:#94A3B8;font-size:13px;line-height:1.6;}
 
@@ -501,14 +523,14 @@ input:checked+.slider:before{transform:translateX(22px);}
 .timer-danger{color:#C62828!important;}
 .timer-blink{color:#C62828!important;animation:blinkFast .5s ease infinite;}
 @keyframes blinkFast{0%,100%{opacity:1}50%{opacity:.2}}
-.question-txt{font-size:15px;margin-bottom:16px;font-weight:600;line-height:1.65;color:var(--dark);text-align:justify;}
+.question-txt{font-size:calc(15px * var(--fs-scale-soal));margin-bottom:16px;font-weight:600;line-height:1.65;color:var(--dark);text-align:justify;}
 .option{display:flex;align-items:center;gap:12px;margin-bottom:9px;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;cursor:pointer;transition:.15s;background:#fff;}
 .option:hover{background:var(--bg);border-color:var(--blue);}
 .option input{display:none;}
 .choice-letter{width:36px;height:36px;min-width:36px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;}
 .option input:checked+.choice-letter{background:#00897B;}
 .option:has(input:checked){background:#E0F2F1;border-color:#00897B;}
-.choice-text{flex:1;font-size:14px;color:#334155;text-align:justify;}
+.choice-text{flex:1;font-size:calc(14px * var(--fs-scale-soal));color:#334155;text-align:justify;}
 .quiz-nav{display:flex;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);}
 .btn-prev,.btn-next,.btn-finish{flex:1;padding:12px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;}
 .btn-prev{background:#F1F5F9;color:var(--dark);}
@@ -593,7 +615,7 @@ input:checked+.slider:before{transform:translateX(22px);}
 .materi-cat-card.tkp{background:linear-gradient(135deg,#00695C,#00897B);}
 .materi-cat-card .mc-icon{font-size:36px;}
 .materi-cat-card .mc-desc{font-size:12px;opacity:.85;}
-.materi-full{background:#fff;border-radius:16px;padding:18px;line-height:1.8;color:#334155;font-size:14px;text-align:justify;}
+.materi-full{background:#fff;border-radius:16px;padding:18px;line-height:1.8;color:#334155;font-size:calc(14px * var(--fs-scale-umum));text-align:justify;}
 .materi-full h2{color:var(--blue);margin-bottom:14px;font-size:18px;border-bottom:2px solid var(--border);padding-bottom:8px;}
 .materi-full h3{color:#6A1B9A;margin:18px 0 8px;font-size:15px;padding-left:10px;border-left:3px solid #6A1B9A;}
 .materi-full p{margin-bottom:10px;}
@@ -752,7 +774,7 @@ input:checked+.slider:before{transform:translateX(22px);}
 .qc-progress-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,#1565C0,#7B1FA2);transition:width .4s ease;}
 .qc-question-card{background:#fff;border-radius:16px;padding:18px;box-shadow:var(--shadow);margin-bottom:10px;width:100%;box-sizing:border-box;}
 .qc-q-num{font-size:11px;color:var(--gray);font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;}
-.qc-q-txt{font-size:15px;font-weight:700;line-height:1.65;color:var(--dark);margin-bottom:14px;text-align:justify;word-break:break-word;width:100%;}
+.qc-q-txt{font-size:calc(15px * var(--fs-scale-soal));font-weight:700;line-height:1.65;color:var(--dark);margin-bottom:14px;text-align:justify;word-break:break-word;width:100%;}
 .qc-q-txt img, .question-txt img, .evaluasi-item .soal-isi img{max-width:100%;height:auto;border-radius:10px;margin:8px 0;display:block;}
 .qc-options{display:flex;flex-direction:column;gap:8px;}
 .qc-opt{display:flex;align-items:center;gap:12px;padding:12px 14px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:.15s;background:#fff;}
@@ -765,7 +787,7 @@ input:checked+.slider:before{transform:translateX(22px);}
 .qc-opt.selected .qc-opt-letter{background:var(--blue);color:#fff;border-color:var(--blue);}
 .qc-opt.correct .qc-opt-letter{background:#00897B;color:#fff;border-color:#00897B;}
 .qc-opt.wrong .qc-opt-letter{background:#C62828;color:#fff;border-color:#C62828;}
-.qc-opt-text{flex:1;font-size:14px;color:#334155;text-align:justify;}
+.qc-opt-text{flex:1;font-size:calc(14px * var(--fs-scale-soal));color:#334155;text-align:justify;}
 .qc-feedback{padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;margin-bottom:8px;display:none;}
 .qc-feedback.benar{background:#E0F2F1;color:#004D40;display:block;}
 .qc-feedback.salah{background:#FFEBEE;color:#B71C1C;display:block;}
@@ -794,7 +816,7 @@ input:checked+.slider:before{transform:translateX(22px);}
 .btn-qc-home{background:linear-gradient(135deg,#E65100,#F57C00);color:#fff;}
 
 /* ========== INFO/ABOUT PAGES ========== */
-.info-block{border-radius:14px;padding:14px;margin-bottom:12px;font-size:14px;line-height:1.7;color:#334155;}
+.info-block{border-radius:14px;padding:14px;margin-bottom:12px;font-size:calc(14px * var(--fs-scale-umum));line-height:1.7;color:#334155;}
 .info-block p{margin-bottom:8px;}
 .info-block.blue-bg{background:#E3F2FD;}
 .info-block.green-bg{background:#E0F2F1;}
@@ -1188,6 +1210,34 @@ input:checked+.slider:before{transform:translateX(22px);}
         <div class="akun-row"><span class="akun-row-left"><span data-icon="icon_akun_paket"></span> Paket Selesai</span><span class="akun-row-val" id="akunPaketDone">0 / 5</span></div>
         <div class="akun-row"><span class="akun-row-left"><span data-icon="icon_akun_lulus"></span> Total Lulus PG</span><span class="akun-row-val" id="akunLulus">0</span></div>
         <div class="akun-row"><span class="akun-row-left"><span data-icon="icon_akun_qc"></span> Sesi Quiz Cepat</span><span class="akun-row-val" id="akunQCSesi">0</span></div>
+      </div>
+      <div class="akun-info-card" style="margin-bottom:12px;">
+        <div class="fontsize-block">
+          <div class="fontsize-head">
+            <span class="fontsize-head-left">🔤 Ukuran Font Soal &amp; Jawaban</span>
+            <span class="fontsize-preview-badge" id="fsSoalBadge">Sedang</span>
+          </div>
+          <div class="fontsize-row" id="fsSoalRow">
+            <button type="button" class="fontsize-btn" data-scale="0.85"><span class="fb-a">A</span><span class="fb-l">Kecil</span></button>
+            <button type="button" class="fontsize-btn" data-scale="1"><span class="fb-a">A</span><span class="fb-l">Sedang</span></button>
+            <button type="button" class="fontsize-btn" data-scale="1.15"><span class="fb-a">A</span><span class="fb-l">Besar</span></button>
+            <button type="button" class="fontsize-btn" data-scale="1.3"><span class="fb-a">A</span><span class="fb-l">X-Besar</span></button>
+          </div>
+          <div class="fontsize-example fs-ex-soal">Contoh: (A) Ini tampilan ukuran teks soal dan pilihan jawaban.</div>
+        </div>
+        <div class="fontsize-block">
+          <div class="fontsize-head">
+            <span class="fontsize-head-left">🔡 Ukuran Font Lainnya</span>
+            <span class="fontsize-preview-badge" id="fsUmumBadge">Sedang</span>
+          </div>
+          <div class="fontsize-row" id="fsUmumRow">
+            <button type="button" class="fontsize-btn" data-scale="0.85"><span class="fb-a">A</span><span class="fb-l">Kecil</span></button>
+            <button type="button" class="fontsize-btn" data-scale="1"><span class="fb-a">A</span><span class="fb-l">Sedang</span></button>
+            <button type="button" class="fontsize-btn" data-scale="1.15"><span class="fb-a">A</span><span class="fb-l">Besar</span></button>
+            <button type="button" class="fontsize-btn" data-scale="1.3"><span class="fb-a">A</span><span class="fb-l">X-Besar</span></button>
+          </div>
+          <div class="fontsize-example fs-ex-umum">Contoh: teks menu, statistik, materi, dan info lainnya di aplikasi.</div>
+        </div>
       </div>
       <div class="akun-info-card" style="margin-bottom:12px;">
   <div class="akun-row">
@@ -2733,6 +2783,50 @@ function syncSoundToggle(){
 }
 function getSoundEnabled(){const v=localStorage.getItem('soundEnabled');return v===null?true:v==='true';}
 function setSoundEnabled(v){localStorage.setItem('soundEnabled',v);}
+
+// ========== FONT SIZE SETTINGS ==========
+const FS_LABELS={'0.85':'Kecil','1':'Sedang','1.15':'Besar','1.3':'X-Besar'};
+function getFontScale(type){
+  const v=localStorage.getItem('fontScale_'+type);
+  return v===null?'1':v;
+}
+function setFontScale(type,val){
+  localStorage.setItem('fontScale_'+type,val);
+  applyFontScale(type,val);
+  syncFontScaleUI(type,val);
+}
+function applyFontScale(type,val){
+  document.documentElement.style.setProperty('--fs-scale-'+type,val);
+}
+function syncFontScaleUI(type,val){
+  const row=document.getElementById(type==='soal'?'fsSoalRow':'fsUmumRow');
+  const badge=document.getElementById(type==='soal'?'fsSoalBadge':'fsUmumBadge');
+  if(row){
+    row.querySelectorAll('.fontsize-btn').forEach(btn=>{
+      btn.classList.toggle('active', btn.dataset.scale===String(val));
+    });
+  }
+  if(badge)badge.textContent=FS_LABELS[String(val)]||'Sedang';
+}
+function initFontScaleControls(){
+  ['soal','umum'].forEach(type=>{
+    const saved=getFontScale(type);
+    applyFontScale(type,saved);
+    syncFontScaleUI(type,saved);
+    const row=document.getElementById(type==='soal'?'fsSoalRow':'fsUmumRow');
+    if(row && !row.dataset.bound){
+      row.dataset.bound='1';
+      row.querySelectorAll('.fontsize-btn').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          playSound('select');
+          setFontScale(type,btn.dataset.scale);
+        });
+      });
+    }
+  });
+}
+// Terapkan segera saat halaman dimuat (sebelum masuk halaman akun)
+initFontScaleControls();
   
 // ========== TIMER TOGGLE ==========
 function getTimerEnabled(){const v=localStorage.getItem('timerEnabled');return v===null?true:v==='true';}

@@ -1150,7 +1150,8 @@ input:checked+.slider:before{transform:translateX(22px);}
     </label>
   </div>
 </div>
-      <button class="btn-logout" style="background:var(--gray-light);color:var(--dark);margin-bottom:10px;" onclick="playSound('back');showGantiPasswordModal()"><span data-icon="icon_akun_nama"></span> Ganti Username & Password</button>
+      <button class="btn-logout" style="background:var(--gray-light);color:var(--dark);margin-bottom:10px;" onclick="playSound('back');showGantiUsernameModal()"><span data-icon="icon_akun_nama"></span> Ganti Username</button>
+      <button class="btn-logout" style="background:var(--gray-light);color:var(--dark);margin-bottom:10px;" onclick="playSound('back');showGantiPasswordModal()"><span data-icon="icon_akun_nama"></span> Ganti Password</button>
       <button class="btn-logout" onclick="playSound('back');showLogoutModal()"><span data-icon="icon_akun_logout"></span> Logout dari User Ini</button>
     </div>
     
@@ -1651,21 +1652,38 @@ input:checked+.slider:before{transform:translateX(22px);}
     </div>
   </div>
 </div>
+<div id="gantiUsernameModal" class="modal-backdrop">
+  <div class="modal-box" style="text-align:left;">
+    <div style="font-size:44px;margin-bottom:10px;text-align:center;">🪪</div>
+    <h3 style="text-align:center;">Ganti Username</h3>
+    <div id="guError" class="login-error" style="margin-top:10px;">⚠️ Error</div>
+    <div class="field-group" style="margin-top:12px;">
+      <label>Username Baru</label>
+      <div class="field-wrap">
+        <input type="text" id="guNewUsername" placeholder="Username baru" autocomplete="username" autocapitalize="none">
+      </div>
+    </div>
+    <div class="field-group">
+      <label>Password (untuk konfirmasi)</label>
+      <div class="field-wrap">
+        <input type="password" id="guPassword" placeholder="Password Anda saat ini" autocomplete="current-password">
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-masuk" id="btnGantiUsername" style="width:100%;" onclick="doGantiUsername()">Simpan Username Baru</button>
+      <button class="btn-modal-cancel" onclick="closeGantiUsernameModal()">Batal</button>
+    </div>
+  </div>
+</div>
 <div id="gantiPasswordModal" class="modal-backdrop">
   <div class="modal-box" style="text-align:left;">
     <div style="font-size:44px;margin-bottom:10px;text-align:center;">🔒</div>
-    <h3 style="text-align:center;">Ganti Username & Password</h3>
+    <h3 style="text-align:center;">Ganti Password</h3>
     <div id="gpError" class="login-error" style="margin-top:10px;">⚠️ Error</div>
     <div class="field-group" style="margin-top:12px;">
       <label>Password Lama</label>
       <div class="field-wrap">
         <input type="password" id="gpOldPassword" placeholder="Password saat ini" autocomplete="current-password">
-      </div>
-    </div>
-    <div class="field-group">
-      <label>Username Baru</label>
-      <div class="field-wrap">
-        <input type="text" id="gpNewUsername" placeholder="Username baru" autocomplete="username" autocapitalize="none">
       </div>
     </div>
     <div class="field-group">
@@ -1681,9 +1699,10 @@ input:checked+.slider:before{transform:translateX(22px);}
       </div>
     </div>
     <div class="modal-btns">
-      <button class="btn-masuk" id="btnGantiPassword" style="width:100%;" onclick="doGantiAkun()">Simpan Perubahan</button>
+      <button class="btn-masuk" id="btnGantiPassword" style="width:100%;" onclick="doGantiPassword()">Simpan Password Baru</button>
       <button class="btn-modal-cancel" onclick="closeGantiPasswordModal()">Batal</button>
     </div>
+
   </div>
 </div>
 
@@ -2172,24 +2191,90 @@ function finishLoginSuccess_(){
   updateHeaderAnim();
 }
 
-async function doGantiAkun(){
+// Verifikasi password saat ini terhadap akun aktif (default di daftar-pengguna.js
+// atau override di Sheet -- untuk kasus override, verifikasi dilakukan backend).
+// Dipakai bareng oleh Ganti Username & Ganti Password.
+function passwordCocokDenganDefault_(id, passwordDicoba){
+  const akunDefault = DAFTAR_PENGGUNA.find(u => u.id === id);
+  if(!akunDefault) return null; // null = tidak diketahui di sini, biar backend yang verifikasi (akun sudah override)
+  return passwordDicoba === akunDefault.password;
+}
+
+// Kirim perubahan username/password ke backend. usernameBaru & passwordBaru
+// WAJIB dua-duanya dikirim ke backend (backend selalu simpan pasangan
+// lengkap), tapi salah satunya boleh "tidak berubah" (dipakai kembali nilai
+// lama) supaya dari sisi USER terasa seperti ganti salah satu saja.
+async function kirimGantiAkun_(usernameBaru, passwordLama, passwordBaru){
   const id = getLoggedInId();
-  const usernameLama = getLoggedInUser();
+  if(!id) return { ok:false, error:'Sesi tidak valid, silakan login ulang.' };
+
+  const cocokLokal = passwordCocokDenganDefault_(id, passwordLama);
+  if(cocokLokal === false){
+    return { ok:false, error:'Password salah.' };
+  }
+  // cocokLokal === true -> akun default & password cocok, lanjut.
+  // cocokLokal === null -> akun sudah override, verifikasi password dilakukan backend.
+
+  try{
+    const res = await fetch(GAS_LOGIN_URL, {
+      method: 'POST',
+      body: JSON.stringify({ aksi: 'gantiakun', id: id, usernameBaru: usernameBaru, passwordLama: passwordLama, passwordBaru: passwordBaru })
+    });
+    const data = await res.json();
+    if(data.ok) setLoggedInUser(usernameBaru);
+    return data;
+  }catch(err){
+    return { ok:false, error:'Gagal terhubung ke server, cek koneksi internet.' };
+  }
+}
+
+async function doGantiUsername(){
+  const usernameBaru = document.getElementById('guNewUsername').value.trim();
+  const password = document.getElementById('guPassword').value;
+  const errEl = document.getElementById('guError');
+  const btn = document.getElementById('btnGantiUsername');
+
+  errEl.classList.remove('show');
+  if(!usernameBaru || !password){
+    errEl.textContent = '⚠️ Semua kolom wajib diisi!';
+    errEl.classList.add('show');
+    return;
+  }
+  if(usernameBaru.toLowerCase() === (getLoggedInUser()||'').toLowerCase()){
+    errEl.textContent = '⚠️ Username baru sama dengan username sekarang.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Menyimpan...';
+  // password lama dipakai lagi sebagai password baru (password TIDAK berubah)
+  const data = await kirimGantiAkun_(usernameBaru, password, password);
+  btn.disabled = false;
+  btn.textContent = 'Simpan Username Baru';
+
+  if(!data.ok){
+    errEl.textContent = '⚠️ ' + (data.error || 'Gagal mengganti username.');
+    errEl.classList.add('show');
+    return;
+  }
+  document.getElementById('guNewUsername').value = '';
+  document.getElementById('guPassword').value = '';
+  closeGantiUsernameModal();
+  refreshAkunPage();
+  playSound('login');
+  alert('Username berhasil diubah menjadi "' + usernameBaru + '"!');
+}
+
+async function doGantiPassword(){
   const passwordLama = document.getElementById('gpOldPassword').value;
-  const usernameBaru = document.getElementById('gpNewUsername').value.trim();
   const passwordBaru = document.getElementById('gpNewPassword').value;
   const passwordBaru2 = document.getElementById('gpNewPassword2').value;
   const errEl = document.getElementById('gpError');
   const btn = document.getElementById('btnGantiPassword');
 
   errEl.classList.remove('show');
-
-  if(!id){
-    errEl.textContent = '⚠️ Sesi tidak valid, silakan login ulang.';
-    errEl.classList.add('show');
-    return;
-  }
-  if(!passwordLama || !usernameBaru || !passwordBaru || !passwordBaru2){
+  if(!passwordLama || !passwordBaru || !passwordBaru2){
     errEl.textContent = '⚠️ Semua kolom wajib diisi!';
     errEl.classList.add('show');
     return;
@@ -2205,59 +2290,38 @@ async function doGantiAkun(){
     return;
   }
 
-  // Kalau akun ini masih akun DEFAULT (belum pernah override di Sheet),
-  // verifikasi password lama dilakukan di sini dulu terhadap daftar-pengguna.js,
-  // karena backend tidak punya akses ke daftar itu.
-  const akunDefault = DAFTAR_PENGGUNA.find(u => u.id === id);
-  if(akunDefault){
-    if(passwordLama !== akunDefault.password){
-      errEl.textContent = '⚠️ Password lama salah.';
-      errEl.classList.add('show');
-      return;
-    }
-  }
-  // Kalau akunDefault tidak ketemu (berarti akun ini sudah pernah override
-  // sebelumnya), verifikasi password lama akan dilakukan oleh backend.
-
   btn.disabled = true;
   btn.textContent = 'Menyimpan...';
-  try{
-    const res = await fetch(GAS_LOGIN_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        aksi: 'gantiakun', id: id,
-        usernameBaru: usernameBaru, passwordLama: passwordLama, passwordBaru: passwordBaru
-      })
-    });
-    const data = await res.json();
-    if(!data.ok){
-      errEl.textContent = '⚠️ ' + (data.error || 'Gagal menyimpan perubahan.');
-      errEl.classList.add('show');
-      return;
-    }
-    // Sukses -> update sesi lokal dengan username baru
-    setLoggedInUser(usernameBaru);
-    document.getElementById('gpOldPassword').value = '';
-    document.getElementById('gpNewUsername').value = '';
-    document.getElementById('gpNewPassword').value = '';
-    document.getElementById('gpNewPassword2').value = '';
-    closeGantiPasswordModal();
-    refreshAkunPage();
-    playSound('login');
-    alert('Username & password berhasil diubah! Gunakan yang baru untuk login berikutnya.');
-  }catch(err){
-    errEl.textContent = '⚠️ Gagal terhubung ke server, cek koneksi internet.';
+  // username tidak berubah, kirim username saat ini apa adanya
+  const usernameSekarang = getLoggedInUser();
+  const data = await kirimGantiAkun_(usernameSekarang, passwordLama, passwordBaru);
+  btn.disabled = false;
+  btn.textContent = 'Simpan Password Baru';
+
+  if(!data.ok){
+    errEl.textContent = '⚠️ ' + (data.error || 'Gagal mengganti password.');
     errEl.classList.add('show');
-  }finally{
-    btn.disabled = false;
-    btn.textContent = 'Simpan Perubahan';
+    return;
   }
+  document.getElementById('gpOldPassword').value = '';
+  document.getElementById('gpNewPassword').value = '';
+  document.getElementById('gpNewPassword2').value = '';
+  closeGantiPasswordModal();
+  playSound('login');
+  alert('Password berhasil diubah!');
 }
+
+function showGantiUsernameModal(){
+  document.getElementById('guError').classList.remove('show');
+  document.getElementById('guNewUsername').value = '';
+  document.getElementById('guPassword').value = '';
+  document.getElementById('gantiUsernameModal').classList.add('show');
+}
+function closeGantiUsernameModal(){document.getElementById('gantiUsernameModal').classList.remove('show');}
 
 function showGantiPasswordModal(){
   document.getElementById('gpError').classList.remove('show');
   document.getElementById('gpOldPassword').value = '';
-  document.getElementById('gpNewUsername').value = getLoggedInUser() || '';
   document.getElementById('gpNewPassword').value = '';
   document.getElementById('gpNewPassword2').value = '';
   document.getElementById('gantiPasswordModal').classList.add('show');

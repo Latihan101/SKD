@@ -934,18 +934,29 @@ input:checked+.slider:before{transform:translateX(22px);}
     <div class="login-icon-wrap">
       <span class="big-icon" data-icon="icon_login_app" style="display:inline-flex;justify-content:center;color:#1565C0;"></span>
       <h1>Latihan SKD CPNS</h1>
-      <p>Masukkan nama Anda untuk mulai belajar</p>
+      <p>Masuk dengan username & password Anda</p>
     </div>
-    <div id="loginError" class="login-error">⚠️ Nama tidak boleh kosong!</div>
+    <div id="loginError" class="login-error">⚠️ Username & password tidak boleh kosong!</div>
     <div class="field-group">
-      <label>Nama Anda</label>
+      <label>Username</label>
       <div class="field-wrap">
-        <input type="text" id="inputNama" placeholder="Contoh: Budi Santoso"
-          autocomplete="name" autocapitalize="words" spellcheck="false"
+        <input type="text" id="inputUsername" placeholder="Contoh: budisantoso"
+          autocomplete="username" autocapitalize="none" spellcheck="false"
+          onkeydown="if(event.key==='Enter')document.getElementById('inputPassword').focus()">
+      </div>
+    </div>
+    <div class="field-group">
+      <label>Password</label>
+      <div class="field-wrap">
+        <input type="password" id="inputPassword" placeholder="Minimal 4 karakter"
+          autocomplete="current-password" spellcheck="false"
           onkeydown="if(event.key==='Enter')doLogin()">
       </div>
     </div>
-    <button class="btn-masuk" onclick="doLogin()">Masuk →</button>
+    <p style="font-size:11px;color:#90A4AE;margin:-8px 0 14px;text-align:center;">
+      Username baru akan otomatis terdaftar dengan password yang Anda ketik.
+    </p>
+    <button class="btn-masuk" id="btnMasuk" onclick="doLogin()">Masuk →</button>
     <div class="login-foot">Version 4.4 · © 2026 Latihan SKD · Hak Cipta Dilindungi</div>
   </div>
 </div>
@@ -1124,7 +1135,7 @@ input:checked+.slider:before{transform:translateX(22px);}
         <span class="akun-badge-pill">✅ Pejuang CPNS</span>
       </div>
       <div class="akun-info-card">
-        <div class="akun-row"><span class="akun-row-left"><span data-icon="icon_akun_nama"></span> Nama</span><span class="akun-row-val" id="akunUsernameInfo">—</span></div>
+        <div class="akun-row"><span class="akun-row-left"><span data-icon="icon_akun_nama"></span> Username</span><span class="akun-row-val" id="akunUsernameInfo">—</span></div>
         <div class="akun-row"><span class="akun-row-left"><span data-icon="icon_akun_skor"></span> Skor Terbaik</span><span class="akun-row-val" id="akunBestScore">—</span></div>
         <div class="akun-row"><span class="akun-row-left"><span data-icon="icon_akun_paket"></span> Paket Selesai</span><span class="akun-row-val" id="akunPaketDone">0 / 5</span></div>
         <div class="akun-row"><span class="akun-row-left"><span data-icon="icon_akun_lulus"></span> Total Lulus PG</span><span class="akun-row-val" id="akunLulus">0</span></div>
@@ -1139,6 +1150,7 @@ input:checked+.slider:before{transform:translateX(22px);}
     </label>
   </div>
 </div>
+      <button class="btn-logout" style="background:var(--gray-light);color:var(--dark);margin-bottom:10px;" onclick="playSound('back');showGantiPasswordModal()"><span data-icon="icon_akun_nama"></span> Ganti Username & Password</button>
       <button class="btn-logout" onclick="playSound('back');showLogoutModal()"><span data-icon="icon_akun_logout"></span> Logout dari User Ini</button>
     </div>
     
@@ -1639,6 +1651,41 @@ input:checked+.slider:before{transform:translateX(22px);}
     </div>
   </div>
 </div>
+<div id="gantiPasswordModal" class="modal-backdrop">
+  <div class="modal-box" style="text-align:left;">
+    <div style="font-size:44px;margin-bottom:10px;text-align:center;">🔒</div>
+    <h3 style="text-align:center;">Ganti Username & Password</h3>
+    <div id="gpError" class="login-error" style="margin-top:10px;">⚠️ Error</div>
+    <div class="field-group" style="margin-top:12px;">
+      <label>Password Lama</label>
+      <div class="field-wrap">
+        <input type="password" id="gpOldPassword" placeholder="Password saat ini" autocomplete="current-password">
+      </div>
+    </div>
+    <div class="field-group">
+      <label>Username Baru</label>
+      <div class="field-wrap">
+        <input type="text" id="gpNewUsername" placeholder="Username baru" autocomplete="username" autocapitalize="none">
+      </div>
+    </div>
+    <div class="field-group">
+      <label>Password Baru</label>
+      <div class="field-wrap">
+        <input type="password" id="gpNewPassword" placeholder="Minimal 4 karakter" autocomplete="new-password">
+      </div>
+    </div>
+    <div class="field-group">
+      <label>Konfirmasi Password Baru</label>
+      <div class="field-wrap">
+        <input type="password" id="gpNewPassword2" placeholder="Ulangi password baru" autocomplete="new-password">
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-masuk" id="btnGantiPassword" style="width:100%;" onclick="doGantiAkun()">Simpan Perubahan</button>
+      <button class="btn-modal-cancel" onclick="closeGantiPasswordModal()">Batal</button>
+    </div>
+  </div>
+</div>
 
 <!-- =========== BOTTOM NAV =========== -->
 <div class="bottom-nav" id="bottomNav" style="display:none;">
@@ -1690,6 +1737,7 @@ input:checked+.slider:before{transform:translateX(22px);}
 <script src="quiztwk.js"></script>
 <script src="quiztiu.js"></script>
 <script src="quiztkp.js"></script>
+<script src="daftar-pengguna.js"></script>
 
 <script>
 // ========== FIX VIEWPORT HEIGHT MOBILE (address bar show/hide) ==========
@@ -2007,8 +2055,17 @@ function setRandomQuote(){
   if(aEl)aEl.textContent=`— ${q.a}`;
 }
 
+// ========== BACKEND LOGIN (Google Apps Script) ==========
+// PENTING: ini backend TERPISAH khusus app Latihan SKD ini, BUKAN backend
+// "Pengantar Statistika / Kelas Digital". Isi URL deployment Web App dari
+// project Backend_Login_LatihanSKD.gs (Sheet & project sendiri).
+const GAS_LOGIN_URL = 'GANTI_DENGAN_URL_WEBAPP_ANDA';
+
 // ========== SESSION ==========
 const SESSION_KEY='skd_logged_in_user';
+const SESSION_ID_KEY='skd_logged_in_id';
+// Fallback aman kalau daftar-pengguna.js gagal termuat (tidak ada akun default yang bisa login)
+const DAFTAR_PENGGUNA = (typeof daftarPengguna !== 'undefined') ? daftarPengguna : [];
 const ACTIVE_PAGE_KEY='skd_active_page';
 const NON_RESTORABLE=['loginPage','quizPage','quizCepatPlayPage'];
 const PAGE_PARENT={
@@ -2022,20 +2079,92 @@ const PAGE_PARENT={
 function getLoggedInUser(){return localStorage.getItem(SESSION_KEY)||null;}
 function setLoggedInUser(u){localStorage.setItem(SESSION_KEY,u);}
 function clearLoggedInUser(){localStorage.removeItem(SESSION_KEY);}
+function getLoggedInId(){return localStorage.getItem(SESSION_ID_KEY)||null;}
+function setLoggedInId(id){localStorage.setItem(SESSION_ID_KEY,id);}
+function clearLoggedInId(){localStorage.removeItem(SESSION_ID_KEY);}
 function saveActivePage(p){if(!NON_RESTORABLE.includes(p))localStorage.setItem(ACTIVE_PAGE_KEY,p);}
 function getLastActivePage(){return localStorage.getItem(ACTIVE_PAGE_KEY)||'homePage';}
 
-function doLogin(){
-  const nama = document.getElementById('inputNama').value.trim();
+async function doLogin(){
+  const username = document.getElementById('inputUsername').value.trim();
+  const password = document.getElementById('inputPassword').value;
   const errEl = document.getElementById('loginError');
-  if(!nama){
-    errEl.textContent = '⚠️ Nama tidak boleh kosong!';
+  const btn = document.getElementById('btnMasuk');
+
+  if(!username || !password){
+    errEl.textContent = '⚠️ Username & password tidak boleh kosong!';
     errEl.classList.add('show');
     return;
   }
   errEl.classList.remove('show');
-  setLoggedInUser(nama);
-  document.getElementById('inputNama').value = '';
+  btn.disabled = true;
+  btn.textContent = 'Memeriksa...';
+
+  try{
+    // Cek dulu apakah username yang diketik cocok dengan salah satu akun
+    // default (id-nya dikirim ke backend supaya backend bisa tahu kalau id
+    // itu sudah pernah override, sehingga kredensial default lama ditolak)
+    const kandidatDefault = DAFTAR_PENGGUNA.find(u => u.username.trim().toLowerCase() === username.toLowerCase());
+    const candidateId = kandidatDefault ? kandidatDefault.id : '';
+
+    // 1) Cek dulu ke Google Sheet (akun yang sudah pernah ganti username/password)
+    const res = await fetch(GAS_LOGIN_URL, {
+      method: 'POST',
+      body: JSON.stringify({ aksi: 'login', username: username, password: password, candidateId: candidateId })
+    });
+    const data = await res.json();
+
+    if(data.ok){
+      // Ketemu & cocok di Sheet -> login pakai data dari Sheet
+      setLoggedInUser(username);
+      setLoggedInId(data.id);
+      return finishLoginSuccess_();
+    }
+
+    if(data.error === 'WRONG_PASSWORD'){
+      // Username ini SUDAH terdaftar sebagai override di Sheet, tapi password salah.
+      // Tidak perlu fallback ke daftar-pengguna.js.
+      errEl.textContent = '⚠️ Password salah untuk username ini.';
+      errEl.classList.add('show');
+      return;
+    }
+
+    if(data.error === 'ACCOUNT_MOVED'){
+      // Username & password ini masih yang LAMA (default), tapi akunnya
+      // sudah pernah diganti ke username baru. Kredensial lama tidak berlaku lagi.
+      errEl.textContent = '⚠️ Akun ini sudah diganti username/passwordnya. Gunakan username & password yang terbaru.';
+      errEl.classList.add('show');
+      return;
+    }
+
+    // data.error === 'NOT_FOUND' -> fallback cek daftar-pengguna.js
+    const akunDefault = DAFTAR_PENGGUNA.find(u =>
+      u.username.trim().toLowerCase() === username.toLowerCase() && u.password === password
+    );
+
+    if(akunDefault){
+      setLoggedInUser(akunDefault.username);
+      setLoggedInId(akunDefault.id);
+      return finishLoginSuccess_();
+    }
+
+    // Cek apakah usernamenya ada di daftar default tapi password salah, biar pesan lebih jelas
+    errEl.textContent = kandidatDefault
+      ? '⚠️ Password salah untuk username ini.'
+      : '⚠️ Username tidak terdaftar. Hubungi admin untuk didaftarkan.';
+    errEl.classList.add('show');
+  }catch(err){
+    errEl.textContent = '⚠️ Gagal terhubung ke server, cek koneksi internet.';
+    errEl.classList.add('show');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Masuk →';
+  }
+}
+
+function finishLoginSuccess_(){
+  document.getElementById('inputUsername').value = '';
+  document.getElementById('inputPassword').value = '';
   playSound('login');
   _showPage('homePage');
   refreshHomeStats();
@@ -2043,10 +2172,102 @@ function doLogin(){
   updateHeaderAnim();
 }
 
+async function doGantiAkun(){
+  const id = getLoggedInId();
+  const usernameLama = getLoggedInUser();
+  const passwordLama = document.getElementById('gpOldPassword').value;
+  const usernameBaru = document.getElementById('gpNewUsername').value.trim();
+  const passwordBaru = document.getElementById('gpNewPassword').value;
+  const passwordBaru2 = document.getElementById('gpNewPassword2').value;
+  const errEl = document.getElementById('gpError');
+  const btn = document.getElementById('btnGantiPassword');
+
+  errEl.classList.remove('show');
+
+  if(!id){
+    errEl.textContent = '⚠️ Sesi tidak valid, silakan login ulang.';
+    errEl.classList.add('show');
+    return;
+  }
+  if(!passwordLama || !usernameBaru || !passwordBaru || !passwordBaru2){
+    errEl.textContent = '⚠️ Semua kolom wajib diisi!';
+    errEl.classList.add('show');
+    return;
+  }
+  if(passwordBaru.length < 4){
+    errEl.textContent = '⚠️ Password baru minimal 4 karakter!';
+    errEl.classList.add('show');
+    return;
+  }
+  if(passwordBaru !== passwordBaru2){
+    errEl.textContent = '⚠️ Konfirmasi password baru tidak cocok!';
+    errEl.classList.add('show');
+    return;
+  }
+
+  // Kalau akun ini masih akun DEFAULT (belum pernah override di Sheet),
+  // verifikasi password lama dilakukan di sini dulu terhadap daftar-pengguna.js,
+  // karena backend tidak punya akses ke daftar itu.
+  const akunDefault = DAFTAR_PENGGUNA.find(u => u.id === id);
+  if(akunDefault){
+    if(passwordLama !== akunDefault.password){
+      errEl.textContent = '⚠️ Password lama salah.';
+      errEl.classList.add('show');
+      return;
+    }
+  }
+  // Kalau akunDefault tidak ketemu (berarti akun ini sudah pernah override
+  // sebelumnya), verifikasi password lama akan dilakukan oleh backend.
+
+  btn.disabled = true;
+  btn.textContent = 'Menyimpan...';
+  try{
+    const res = await fetch(GAS_LOGIN_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        aksi: 'gantiakun', id: id,
+        usernameBaru: usernameBaru, passwordLama: passwordLama, passwordBaru: passwordBaru
+      })
+    });
+    const data = await res.json();
+    if(!data.ok){
+      errEl.textContent = '⚠️ ' + (data.error || 'Gagal menyimpan perubahan.');
+      errEl.classList.add('show');
+      return;
+    }
+    // Sukses -> update sesi lokal dengan username baru
+    setLoggedInUser(usernameBaru);
+    document.getElementById('gpOldPassword').value = '';
+    document.getElementById('gpNewUsername').value = '';
+    document.getElementById('gpNewPassword').value = '';
+    document.getElementById('gpNewPassword2').value = '';
+    closeGantiPasswordModal();
+    refreshAkunPage();
+    playSound('login');
+    alert('Username & password berhasil diubah! Gunakan yang baru untuk login berikutnya.');
+  }catch(err){
+    errEl.textContent = '⚠️ Gagal terhubung ke server, cek koneksi internet.';
+    errEl.classList.add('show');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Simpan Perubahan';
+  }
+}
+
+function showGantiPasswordModal(){
+  document.getElementById('gpError').classList.remove('show');
+  document.getElementById('gpOldPassword').value = '';
+  document.getElementById('gpNewUsername').value = getLoggedInUser() || '';
+  document.getElementById('gpNewPassword').value = '';
+  document.getElementById('gpNewPassword2').value = '';
+  document.getElementById('gantiPasswordModal').classList.add('show');
+}
+function closeGantiPasswordModal(){document.getElementById('gantiPasswordModal').classList.remove('show');}
+
 function showLogoutModal(){document.getElementById('logoutModal').classList.add('show');}
 function closeLogoutModal(){document.getElementById('logoutModal').classList.remove('show');}
 function doLogout(){
-  closeLogoutModal();clearLoggedInUser();localStorage.removeItem(ACTIVE_PAGE_KEY);
+  closeLogoutModal();clearLoggedInUser();clearLoggedInId();localStorage.removeItem(ACTIVE_PAGE_KEY);
   if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
   if(qcState&&qcState.interval){clearInterval(qcState.interval);qcState.interval=null;}
   hideSidebarToggle();

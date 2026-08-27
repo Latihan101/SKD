@@ -2078,7 +2078,7 @@ function setRandomQuote(){
 // PENTING: ini backend TERPISAH khusus app Latihan SKD ini, BUKAN backend
 // "Pengantar Statistika / Kelas Digital". Isi URL deployment Web App dari
 // project Backend_Login_LatihanSKD.gs (Sheet & project sendiri).
-const GAS_LOGIN_URL = 'https://script.google.com/macros/s/AKfycbxERMZMczuGkvNPAmBGnnCDKqidNhyzaCqYncOSGTcMAR_pXEr046bHqzIRMuomk4fBYQ/exec';
+const GAS_LOGIN_URL = 'https://script.google.com/macros/s/AKfycbxx-3vg9BScmJu_AfStshmaDT9hhbVp2hOWv6ONA7cjj1wO-1DMWSMWEwvTlw242JSP4A/exec';
 
 // ========== SESSION ==========
 const SESSION_KEY='skd_logged_in_user';
@@ -2558,147 +2558,14 @@ window.addEventListener('popstate',function(e){
   }
 })();
 
-// ========== SINKRONISASI PROGRES (biar bisa dibuka di browser/device lain) ==========
-// Semua data progres (skor, achievement, riwayat quiz cepat, dll) tetap disimpan
-// di localStorage seperti biasa (biar tetap cepat & jalan walau offline), TAPI
-// juga dikirim ke Sheet "Progress" (dikaitkan ke id akun, bukan ke device).
-// Saat login/refresh, data dari server ditarik lalu DIGABUNG ke lokal:
-// - Untuk skor/hitungan: ambil yang PALING TINGGI (progres tidak pernah mundur)
-// - Untuk achievement & status "sudah dibuka": digabung (union), bukan ditimpa
-// Jadi aman dipakai gantian di 2 device tanpa takut progres salah satu hilang.
-
-const PROGRESS_STATIC_KEYS = ['materiOpened','menuVisited','simulasiCount','simulasiLulusBerturut','simulasi_last','achUnlocked'];
-
-function progressDynamicKeys_(){
-  const keys=[];
-  for(let i=1;i<=5;i++){
-    keys.push(`skorTWK_latihan${i}`,`skorTIU_latihan${i}`,`skorTKP_latihan${i}`,`bestScore_latihan${i}`,`evalData_latihan${i}`,`paketUlangi_${i}`);
-  }
-  ['twk','tiu','tkp'].forEach(cat=>{
-    [1,3,5,10].forEach(m=>keys.push(`qcBest_${cat}_${m}m`));
-    keys.push(`qcTotalSesi_${cat}`,`qcStreakMax_${cat}`,`qcNoWrong_${cat}`,`qcAkurasi90_${cat}`);
-  });
-  return keys;
-}
-
-function collectProgressBundle_(){
-  const bundle={};
-  [...PROGRESS_STATIC_KEYS, ...progressDynamicKeys_()].forEach(key=>{
-    const v=localStorage.getItem(key);
-    if(v!==null) bundle[key]=v;
-  });
-  return bundle;
-}
-
-// Angka yang sifatnya "rekor/akumulasi" -> saat digabung, ambil yang lebih besar
-const PROGRESS_NUMERIC_MAX_RE = /^(skorTWK|skorTIU|skorTKP|bestScore|qcBest|qcTotalSesi|qcStreakMax|qcNoWrong|qcAkurasi90|simulasiCount|simulasiLulusBerturut|paketUlangi)/;
-
-function mergeProgressBundles_(local, remote){
-  const result={};
-  const allKeys=new Set([...Object.keys(local), ...Object.keys(remote)]);
-  allKeys.forEach(key=>{
-    const a=local[key], b=remote[key];
-    if(a===undefined){ result[key]=b; return; }
-    if(b===undefined){ result[key]=a; return; }
-    if(PROGRESS_NUMERIC_MAX_RE.test(key)){
-      result[key]=String(Math.max(parseInt(a)||0, parseInt(b)||0));
-      return;
-    }
-    if(key==='achUnlocked'){
-      try{ result[key]=JSON.stringify(Array.from(new Set([...(JSON.parse(a)||[]), ...(JSON.parse(b)||[])]))); }
-      catch(e){ result[key]=b; }
-      return;
-    }
-    if(key==='materiOpened'||key==='menuVisited'){
-      try{ result[key]=JSON.stringify(Object.assign({}, JSON.parse(a)||{}, JSON.parse(b)||{})); }
-      catch(e){ result[key]=b; }
-      return;
-    }
-    if(key.startsWith('evalData_latihan')){
-      // Ikuti sisi mana yang bestScore paket ini lebih tinggi (dianggap riwayat yang relevan)
-      const setId=key.replace('evalData_latihan','');
-      const localBest=parseInt(local[`bestScore_latihan${setId}`])||0;
-      const remoteBest=parseInt(remote[`bestScore_latihan${setId}`])||0;
-      result[key]=remoteBest>localBest?b:a;
-      return;
-    }
-    if(key==='simulasi_last'){
-      // Ikuti sisi dengan simulasiCount lebih besar (dianggap snapshot lebih baru)
-      const localCount=parseInt(local.simulasiCount)||0, remoteCount=parseInt(remote.simulasiCount)||0;
-      result[key]=remoteCount>=localCount?b:a;
-      return;
-    }
-    result[key]=b; // default: pakai dari server
-  });
-  return result;
-}
-
-function applyProgressBundle_(remoteBundle){
-  if(!remoteBundle) return;
-  const localBundle=collectProgressBundle_();
-  const merged=mergeProgressBundles_(localBundle, remoteBundle);
-  Object.keys(merged).forEach(key=>localStorage.setItem(key, merged[key]));
-  achUnlocked=JSON.parse(localStorage.getItem('achUnlocked')||'[]');
-}
-
-let _progressSyncTimer=null;
-function scheduleProgressSync(){
-  if(_progressSyncTimer) clearTimeout(_progressSyncTimer);
-  _progressSyncTimer=setTimeout(syncProgressToServer, 1500);
-}
-
-async function syncProgressToServer(){
-  const id=getLoggedInId();
-  if(!id) return;
-  try{
-    const bundle=collectProgressBundle_();
-    await fetchDenganTimeout_(GAS_LOGIN_URL, {
-      method:'POST',
-      body: JSON.stringify({ aksi:'simpanprogres', id:id, data:bundle })
-    }, 15000);
-  }catch(e){ /* gagal sinkron diam-diam saja, tidak ganggu pemakaian offline */ }
-}
-
-// Jaga-jaga: kalau tab ditutup / pindah app SEBELUM debounce 1.5 detik di
-// scheduleProgressSync() sempat jalan, progres terakhir bisa gak kekirim ke
-// server. navigator.sendBeacon dirancang khusus buat kasus ini -- kirim data
-// terakhir pas halaman mau ditutup, jalan di background, gak bikin nutup tab
-// jadi lambat, dan tetap terkirim walau tab sudah gak aktif lagi.
-function flushProgressSyncBeacon_(){
-  const id = getLoggedInId();
-  if(!id) return;
-  if(_progressSyncTimer){ clearTimeout(_progressSyncTimer); _progressSyncTimer = null; }
-  try{
-    const bundle = collectProgressBundle_();
-    const payload = JSON.stringify({ aksi:'simpanprogres', id:id, data:bundle });
-    navigator.sendBeacon(GAS_LOGIN_URL, new Blob([payload], { type:'text/plain;charset=UTF-8' }));
-  }catch(e){ /* tab sudah mau tertutup, tidak ada lagi yang bisa dilakukan kalau gagal */ }
-}
-window.addEventListener('pagehide', flushProgressSyncBeacon_);
-document.addEventListener('visibilitychange', function(){
-  if(document.visibilityState === 'hidden') flushProgressSyncBeacon_();
-});
-
-async function loadProgressFromServer(){
-  const id=getLoggedInId();
-  if(!id) return;
-  try{
-    const res=await fetchDenganTimeout_(GAS_LOGIN_URL, {
-      method:'POST',
-      body: JSON.stringify({ aksi:'ambilprogres', id:id })
-    }, 15000);
-    const data=await res.json();
-    if(data.ok && data.data){
-      applyProgressBundle_(data.data);
-      refreshHomeStats();
-      const activeEl=document.querySelector('.page.active');
-      const activeId=activeEl?activeEl.id:'';
-      if(activeId==='quizlistPage') refreshQuizList();
-      if(activeId==='statistikPage') refreshStatistik();
-      if(activeId==='pencapaianPage') refreshPencapaian();
-    }
-  }catch(e){ /* offline / gagal ambil -> tetap pakai data lokal yang ada */ }
-}
+// ========== PROGRES: LOCAL-ONLY (tidak disinkron ke server) ==========
+// Progres (skor, achievement, riwayat quiz) disimpan di localStorage device/
+// browser masing-masing saja. Login/ganti akun tetap lewat backend (GAS_LOGIN_URL),
+// tapi progres TIDAK dikirim/ditarik dari server -- kalau pindah browser atau
+// device, progres tidak ikut pindah.
+function scheduleProgressSync(){ /* dimatikan: progres cuma disimpan lokal */ }
+async function syncProgressToServer(){ /* dimatikan: progres cuma disimpan lokal */ }
+async function loadProgressFromServer(){ /* dimatikan: progres cuma disimpan lokal */ }
 
 // ========== TRACKING ==========
 function markMateriOpened(kat){const d=JSON.parse(localStorage.getItem('materiOpened')||'{}');d[kat]=true;localStorage.setItem('materiOpened',JSON.stringify(d));scheduleProgressSync();}
